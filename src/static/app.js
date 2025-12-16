@@ -27,10 +27,40 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="participants-section">
               <strong>Participants:</strong>
               <ul class="participants-list">
-                ${details.participants.map(email => `<li>${email}</li>`).join("")}
+                ${details.participants.map(email => `
+                  <li class="participant-item">
+                    <span class="participant-email">${email}</span>
+                    <span class="delete-participant" title="Remove" data-activity="${name}" data-email="${email}">&#128465;</span>
+                  </li>
+                `).join("")}
               </ul>
             </div>
           `;
+                // Add event listeners for delete icons after rendering
+                setTimeout(() => {
+                  const deleteIcons = activityCard.querySelectorAll('.delete-participant');
+                  deleteIcons.forEach(icon => {
+                    icon.addEventListener('click', async (e) => {
+                      const activityName = icon.getAttribute('data-activity');
+                      const email = icon.getAttribute('data-email');
+                      if (confirm(`Remove ${email} from ${activityName}?`)) {
+                        try {
+                          const response = await fetch(`/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`, {
+                            method: 'DELETE',
+                          });
+                          const result = await response.json();
+                          if (response.ok) {
+                            fetchActivities();
+                          } else {
+                            alert(result.detail || 'Failed to remove participant.');
+                          }
+                        } catch (err) {
+                          alert('Error removing participant.');
+                        }
+                      }
+                    });
+                  });
+                }, 0);
         } else {
           participantsHTML = `
             <div class="participants-section no-participants">
